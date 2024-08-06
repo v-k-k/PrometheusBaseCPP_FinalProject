@@ -2,7 +2,7 @@
 .vscode/
 
 # Ignore binary files
-bin/
+bin/*
 
 # Prerequisites
 *.d

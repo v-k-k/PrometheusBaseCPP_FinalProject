@@ -32,18 +32,18 @@ sockaddr_in createServerAddress(u_short port) {
     return serverAddr;
 }
 
-std::vector<int> collectIntVector(Socket clientSocket) {
+std::vector<int> collectIntVector(std::function<void(std::string)> callbackLogger, Socket clientSocket) {
     std::vector<int> values;
     std::string buffer;
     bool done = false;
 
     while (!done) {
-        char data[1024];
+        char data[BUFFER_SIZE];
         int bytes_received = recv(clientSocket, data, BUFFER_SIZE, 0);
         if (bytes_received <= 0) {
             break;
         }
-        std::cout << "got: " << buffer << std::endl;
+        callbackLogger("RECEIVED VALUES\r\n" + buffer);
 
         data[bytes_received] = '\0';
         buffer += data;
@@ -61,26 +61,29 @@ std::vector<int> collectIntVector(Socket clientSocket) {
     return values;
 }
 
-void arraySum(Socket clientSocket) {
-    std::vector<int> values = collectIntVector(clientSocket);
-    int sum = 0;
-    for (int num : values) sum += num;
-
-    std::string result = "Calculated sum: " + std::to_string(sum);
-    send(clientSocket, result.c_str(), result.length(), 0);
-}
-
-void arrayProduct(Socket clientSocket) {
-    std::vector<int> values = collectIntVector(clientSocket);
-
-    int product = 1;
-    for (int num : values) product *= num;
+void collectAndProcess(std::function<void(std::string)> callbackLogger, Socket clientSocket, int perationIdx) {
+    std::vector<int> values = collectIntVector(callbackLogger, clientSocket);
+    int result = 0;
+    std::string finished = "sum: ";
+    switch (perationIdx)
+    {
+    case 1:
+        result = 1;
+        for (int v : values) result *= v;
+        finished = "product: ";
+        break;
     
-    std::string result = "Calculated product: " + std::to_string(product);
-    send(clientSocket, result.c_str(), result.length(), 0);
+    default:
+        for (int v : values) result += v;
+        break;
+    }
+
+    std::string message = "Calculated " + finished + std::to_string(result);
+    callbackLogger(message);
+    send(clientSocket, message.c_str(), message.length(), 0);
 }
 
-void responseHello(Socket clientSocket) {
+void responseHello(std::function<void(std::string)> callbackLogger, Socket clientSocket) {
     char buffer[BUFFER_SIZE];
     int bytesReceived;
     while ((bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE, 0)) > 0) {
@@ -89,8 +92,14 @@ void responseHello(Socket clientSocket) {
 
         // Send "Hello" as a response
         send(clientSocket, "Hello\r\n", 7, 0);
+        callbackLogger("Hello\r\n");
         break;
     }
+}
+
+void respondWithText(std::string msg, std::function<void(std::string)> callbackLogger, Socket clientSocket) {
+    send(clientSocket, msg.c_str(), msg.length(), 0);
+    callbackLogger("Respond with " + std::to_string(msg.length()) + " bytes");
 }
 
 Socket initListenSocket() {
@@ -157,7 +166,7 @@ bool acceptClientFailed(Socket listenSocket, Socket* clientSocket, std::string* 
 
 #ifdef _WIN32
 
-    * clientSocket = accept(listenSocket, NULL, NULL);
+    *clientSocket = accept(listenSocket, NULL, NULL);
     *errMsg = "Client was not accepted: " + WSAGetLastError();
     return *clientSocket == INVALID_SOCKET;
 
@@ -168,6 +177,33 @@ bool acceptClientFailed(Socket listenSocket, Socket* clientSocket, std::string* 
     *clientSocket = accept(listenSocket, (sockaddr*)&clientAddr, &clientLen);
     *errMsg = "Client was not accepted";
     return *clientSocket == -1;
+
+#endif
+}
+
+int handleClientDecision(Socket clientSocket) {
+    char buffer[BUFFER_SIZE];
+    int bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE, 0);
+    if (bytesReceived <= 0)
+        throw CustomException("No client input");
+
+    buffer[bytesReceived] = '\0';
+    int clientChoice = atoi(buffer);
+    return clientChoice;
+}
+
+void closeClientConnection(std::function<void(std::string)> callbackLogger, Socket clientSocket){
+    callbackLogger("Closing the client connection...");
+    char* byeBye = "\nBye...\n";
+    send(clientSocket, byeBye, sizeof(byeBye), 0);
+
+#ifdef _WIN32
+
+    closesocket(clientSocket);
+
+#else
+
+    close(clientSocket);
 
 #endif
 }

@@ -128,9 +128,10 @@ int main(void) {
 #include <ctime>
 #include "client.h"
 
+int Client::objCounter = 0;
+
 /// @brief Implementation of the Client constructor.
-Client::Client(int id, int port, std::string addr){
-    this->id = id;
+Client::Client(int port, std::string addr) : id(++objCounter) {
     this->port = port;
     this->ip = addr;
 }
@@ -153,4 +154,7 @@ void Client::log(std::string msg) {
     std::cout << "C_" << id << " <<" << ip << " : " << port << ">> " << "[ " << t_stamp << " ]: " << msg << std::endl;
 }
 
+int Client::getId() const {
+    return id;
+}
 

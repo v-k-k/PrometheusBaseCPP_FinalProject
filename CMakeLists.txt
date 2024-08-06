@@ -3,6 +3,7 @@ project(communicate)
 
 set(CMAKE_CXX_STANDARD 17)
 set(SOURCE_FILES
+    src/tools/tools.cpp
     src/client/client.cpp
     src/server/server.cpp
     src/main.cpp

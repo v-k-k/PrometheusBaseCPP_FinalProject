@@ -2,16 +2,14 @@
 #include <ctime>
 #include "server/server.h"
 #include "client/client.h"
+#include "tools/tools.h"
 
 
 int main() {
     int userDecision;
     int intPort;
         
-    std::cout << "WELCOME TO SIMPLE SOCKET APP!" << std::endl;
-    std::cout << "Chose which type of socket you want to use:" << std::endl;
-    std::cout << "1. SERVER" << std::endl;
-    std::cout << "2. CLIENT" << std::endl;
+    showMainMenu();
 
     std::cin >> userDecision;
 
@@ -46,18 +44,24 @@ int main() {
 
             auto [client_ip, client_port] = getClientIpPort(clientSocket);
 
-            Client* clt = new Client(1, client_port, client_ip);
-            clt->log("We have " + std::to_string(clt->id) + " client");
+            Client* clt = new Client(client_port, client_ip);
+            clt->log("We have " + std::to_string(clt->getId()) + " client");
 
-            responseHello(clientSocket);
+            /*
+             * Temporarily stuff.
+             * Uncomment in case of using third-party socket client like Putty etc.
+             */
+            responseHello(std::bind(&Client::log, clt, std::placeholders::_1), clientSocket);
 
+            while (true) {
+                respondWithText(SERVER_MENU, std::bind(&Client::log, clt, std::placeholders::_1), clientSocket);
+                
+                userDecision = handleClientDecision(clientSocket);
 
-            arrayProduct(clientSocket);
-            
-            clt->log("hole");
-
-            // _WIN32 closesocket(clientSocket);
-            //  POSIX close(clientSocket);
+                auto chosenFunc = userMadeDecision(userDecision);
+                respondWithText(chosenFunc.first, std::bind(&Client::log, clt, std::placeholders::_1), clientSocket);
+                chosenFunc.second(std::bind(&Client::log, clt, std::placeholders::_1), clientSocket);
+            }
         }
 
         closeListenSocket(listenSocket);
