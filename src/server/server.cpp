@@ -43,12 +43,12 @@ std::vector<int> collectIntVector(std::function<void(std::string)> callbackLogge
         if (bytes_received <= 0) {
             break;
         }
-        callbackLogger("RECEIVED VALUES\r\n" + buffer);
+        callbackLogger("[[ INFO ]]: RECEIVED VALUES\r\n" + std::string(buffer));
 
         data[bytes_received] = '\0';
         buffer += data;
 
-        if (buffer.find("\r\n\r\n") != std::string::npos) {
+        if (buffer.find("=\r\n") != std::string::npos) {
             done = true;
             buffer.erase(remove(buffer.begin(), buffer.end(), '\n'), buffer.end());
         }
@@ -181,13 +181,14 @@ bool acceptClientFailed(Socket listenSocket, Socket* clientSocket, std::string* 
 #endif
 }
 
-int handleClientDecision(Socket clientSocket) {
+int handleClientDecision(std::function<void(std::string)> callbackLogger, Socket clientSocket) {
     char buffer[BUFFER_SIZE];
     int bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE, 0);
     if (bytesReceived <= 0)
         throw CustomException("No client input");
 
     buffer[bytesReceived] = '\0';
+    callbackLogger("[[ DEBUG ]]: " + std::string(buffer));
     int clientChoice = atoi(buffer);
     return clientChoice;
 }

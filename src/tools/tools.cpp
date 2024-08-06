@@ -10,12 +10,12 @@ void showMainMenu(){
 std::pair<std::string, std::function<void(std::function<void(std::string)>, Socket)>> userMadeDecision(int decIdx) {
     switch (decIdx) {
         case 1:
-            return {"You choose calculate array sum. Input the array members:\r\n",
+            return {"You choose calculate array sum. Input the array members (press `=` to calculate):\r\n",
                     [=](std::function<void(std::string)> callbackLogger, Socket clientSocket) {
                         collectAndProcess(callbackLogger, clientSocket, Operation::add);
                     }};
         case 2:
-            return {"You choose calculate array product. Input the array members:\r\n",
+            return {"You choose calculate array product. Input the array members (press `=` to calculate):\r\n",
                     [=](std::function<void(std::string)> callbackLogger, Socket clientSocket) {
                         collectAndProcess(callbackLogger, clientSocket, Operation::multiply);
                     }};

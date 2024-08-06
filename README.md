@@ -16,11 +16,12 @@ The **communicate** *executable* should be generated.
 ## Usage
 
 ```bash
-communicate
+./communicate
 
 # choose if you want to use server or client socket
 # follow the steps in menu
-# menu commands autocomplete is available with the `Tab` button
+# for client to receive calculation result send the `=` sign
+# TODO: menu commands autocomplete is available with the `Tab` button
 ```
 ## Link
 

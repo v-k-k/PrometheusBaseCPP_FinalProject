@@ -3,6 +3,24 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
+#include <cstring>
+#include "../exceptions/customEx.h"
+
+#ifdef _WIN32
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
+typedef SOCKET Socket;
+#else
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include  <netdb.h>
+typedef int Socket;
+#endif
 
 /// @brief Represents a client on the server side with it's ip, port and id properties.
 class Client {
@@ -22,5 +40,15 @@ class Client {
         int getId() const;
 
 };
+
+Socket initClientSocket();
+
+sockaddr_in createAddress(u_short port);
+
+void connectToServer(Socket clientSocket, sockaddr_in addr);
+
+void receiveFromServer(Socket clientSocket, char* buffer, int buffer_size);
+
+void closeClientSocket(Socket clientSocket, std::string errMsg = "", bool gotErr = false);
 
 #endif
