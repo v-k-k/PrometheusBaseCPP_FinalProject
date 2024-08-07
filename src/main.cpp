@@ -1,4 +1,4 @@
-#include <limits>
+// #include <limits>
 #include <ctime>
 #include "server/server.h"
 #include "client/client.h"
@@ -15,11 +15,14 @@ int main() {
     std::cout << "Enter the port number: ";
     std::cin >> intPort;
 
-    // Checking for overflow
-    if (intPort < 0 || intPort > std::numeric_limits<u_short>::max()) {
-        std::cerr << "Incorrect port number to convrt in u_short." << std::endl;
-        return 1;
-    }
+    /*
+     * Unnecessary overflow check
+     *  
+     * if (intPort < 0 || intPort > std::numeric_limits<u_short>::max()) {
+     *     std::cerr << "Incorrect port number to convrt in u_short." << std::endl;
+     *     return 1;
+     * }
+     */
 
     u_short usPort = static_cast<u_short>(intPort);
 
@@ -47,7 +50,7 @@ int main() {
              * Uncomment `responseHello` function in case of using third-party socket client like Putty etc.
              */
             // responseHello(std::bind(&Client::log, clt, std::placeholders::_1), clientSocket);
-            send(clientSocket, "WELCOME TO THE SIMPLE SOCKET SERVER!!!\r\n", 7, 0);
+            send(clientSocket, "WELCOME TO SIMPLE SOCKET SERVER!!!\r\n", 7, 0);
 
             while (true) {
                 respondWithText(SERVER_MENU, std::bind(&Client::log, clt, std::placeholders::_1), clientSocket);
@@ -69,7 +72,7 @@ int main() {
         connectToServer(clientSocket, addr);
 
         char buffer[BUFFER_SIZE];
-        int recvResult;
+        int recvResult;/**/
 
         // Receive welcome message
         receiveFromServer(clientSocket, buffer, BUFFER_SIZE);

@@ -61,15 +61,27 @@ Socket initClientSocket() {
 }
 
 sockaddr_in createAddress(u_short port) {
+    /*struct hostent *hostinfo = gethostbyname("127.0.0.1");
+        if (hostinfo == NULL) {
+            perror("Error resolving hostname");
+            exit(1);
+        }
+
+        // Fill server address structure
+        memset(&addr, 0, sizeof(addr));
+        addr.sin_family = AF_INET;
+        memcpy(&addr.sin_addr, hostinfo->h_addr, hostinfo->h_length);
+        addr.sin_port = htons(usPort);*/
     sockaddr_in addr;
-    addr.sin_family = AF_INET;
 #ifdef _WIN32	
+    addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 #else
 	struct hostent *hostinfo = gethostbyname("127.0.0.1");
     if (hostinfo == NULL) 
 		throw CustomException("Error resolving hostname");
 	memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
     memcpy(&addr.sin_addr, hostinfo->h_addr, hostinfo->h_length);
 #endif
     addr.sin_port = htons(port);
