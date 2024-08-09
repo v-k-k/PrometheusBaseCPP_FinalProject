@@ -1,4 +1,4 @@
-// #include <limits>
+// #include <limits> /* Uncomment in case if overflow check required */
 #include <ctime>
 #include "server/server.h"
 #include "client/client.h"
@@ -44,23 +44,24 @@ int main() {
             auto [client_ip, client_port] = getClientIpPort(clientSocket);
 
             Client* clt = new Client(client_port, client_ip);
-            clt->log("We have " + std::to_string(clt->getId()) + " client");
+            clt->log(INFO, "We have " + std::to_string(clt->getId()) + " client");
+
+            std::string greetMsg = "WELCOME TO SIMPLE SOCKET SERVER!!!\r\n" + clt->serialize() + "\r\n";
 
             /*
              * Uncomment `responseHello` function in case of using third-party socket client like Putty etc.
              */
-            // responseHello(std::bind(&Client::log, clt, std::placeholders::_1), clientSocket);
-            send(clientSocket, "WELCOME TO SIMPLE SOCKET SERVER!!!\r\n", 7, 0);
+            // responseHello([clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
+            send(clientSocket, greetMsg.c_str(), greetMsg.length(), 0);
 
             while (true) {
-                respondWithText(SERVER_MENU, std::bind(&Client::log, clt, std::placeholders::_1), clientSocket);
-                
-                userDecision = handleClientDecision(std::bind(&Client::log, clt, std::placeholders::_1), clientSocket);
-                clt->log("[[ WARNING ]]: " + std::to_string(userDecision));
+                respondWithText(SERVER_MENU, [clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
 
+                userDecision = handleClientDecision([clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
+                
                 auto chosenFunc = userMadeDecision(userDecision);
-                respondWithText(chosenFunc.first, std::bind(&Client::log, clt, std::placeholders::_1), clientSocket);
-                chosenFunc.second(std::bind(&Client::log, clt, std::placeholders::_1), clientSocket);
+                respondWithText(chosenFunc.first, [clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
+                chosenFunc.second([clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
             }
         }
 
@@ -72,13 +73,18 @@ int main() {
         connectToServer(clientSocket, addr);
 
         char buffer[BUFFER_SIZE];
-        int recvResult;/**/
+        int recvResult;
 
         // Receive welcome message
         receiveFromServer(clientSocket, buffer, BUFFER_SIZE);
 
+        std::string clientInWelcomeMessage = split(buffer, { "\r\n" })[1];
+        Client* clt = Client::deserialize(clientInWelcomeMessage);
+        clt->log(WARNING, "Client object has been created");
+
         // Receive menu options
         receiveFromServer(clientSocket, buffer, BUFFER_SIZE);
+        clt->log(DEBUG, "Received " + std::to_string(sizeof(buffer)) + " bytes from server");
 
         std::string choice;
 
@@ -87,9 +93,11 @@ int main() {
             std::cin >> choice;
             choice += "\r\n";
             send(clientSocket, choice.c_str(), choice.length(), 0);
+            clt->log(WARNING, "You've chosen " + choice);
 
             // Receive sever options
             receiveFromServer(clientSocket, buffer, BUFFER_SIZE);
+            clt->log(DEBUG, "Received " + std::to_string(sizeof(buffer)) + " bytes from server");
 
             if (choice == "3\r\n") break;
 
@@ -99,18 +107,21 @@ int main() {
                     std::cin >> inputElement;
                     inputElement += "\r\n";
                     send(clientSocket, inputElement.c_str(), inputElement.length(), 0);
-                    std::cout << "SENT: " << inputElement << std::endl;
+                    clt->log(DEBUG, "You've sent " + inputElement);
                     if (inputElement == "=\r\n") break;
                 }
 
                 // Receive result
                 receiveFromServer(clientSocket, buffer, BUFFER_SIZE);
+                clt->log(DEBUG, "Received " + std::to_string(sizeof(buffer)) + " bytes from server");
             }
         }
         // Receive goodbye
         receiveFromServer(clientSocket, buffer, BUFFER_SIZE);
+        clt->log(DEBUG, "Goodbye message " + std::to_string(sizeof(buffer)) + " bytes from server");
 
         closeClientSocket(clientSocket);
+        clt->log(WARNING, "Client socket has been closed");
     }
         
     return 0;

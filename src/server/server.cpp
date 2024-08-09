@@ -32,7 +32,7 @@ sockaddr_in createServerAddress(u_short port) {
     return serverAddr;
 }
 
-std::vector<int> collectIntVector(std::function<void(std::string)> callbackLogger, Socket clientSocket) {
+std::vector<int> collectIntVector(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket) {
     std::vector<int> values;
     std::string buffer;
     bool done = false;
@@ -43,7 +43,7 @@ std::vector<int> collectIntVector(std::function<void(std::string)> callbackLogge
         if (bytes_received <= 0) {
             break;
         }
-        callbackLogger("[[ INFO ]]: RECEIVED VALUES\r\n" + std::string(buffer));
+        callbackLogger(DEBUG, "RECEIVED VALUES\r\n" + std::string(buffer));
 
         data[bytes_received] = '\0';
         buffer += data;
@@ -61,7 +61,7 @@ std::vector<int> collectIntVector(std::function<void(std::string)> callbackLogge
     return values;
 }
 
-void collectAndProcess(std::function<void(std::string)> callbackLogger, Socket clientSocket, int perationIdx) {
+void collectAndProcess(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket, int perationIdx) {
     std::vector<int> values = collectIntVector(callbackLogger, clientSocket);
     int result = 0;
     std::string finished = "sum: ";
@@ -79,11 +79,11 @@ void collectAndProcess(std::function<void(std::string)> callbackLogger, Socket c
     }
 
     std::string message = "Calculated " + finished + std::to_string(result);
-    callbackLogger(message);
+    callbackLogger(DEBUG, message);
     send(clientSocket, message.c_str(), message.length(), 0);
 }
 
-void responseHello(std::function<void(std::string)> callbackLogger, Socket clientSocket) {
+void responseHello(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket) {
     char buffer[BUFFER_SIZE];
     int bytesReceived;
     while ((bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE, 0)) > 0) {
@@ -92,14 +92,14 @@ void responseHello(std::function<void(std::string)> callbackLogger, Socket clien
 
         // Send "Hello" as a response
         send(clientSocket, "Hello\r\n", 7, 0);
-        callbackLogger("Hello\r\n");
+        callbackLogger(DEBUG, "Hello\r\n");
         break;
     }
 }
 
-void respondWithText(std::string msg, std::function<void(std::string)> callbackLogger, Socket clientSocket) {
+void respondWithText(std::string msg, std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket) {
     send(clientSocket, msg.c_str(), msg.length(), 0);
-    callbackLogger("Respond with " + std::to_string(msg.length()) + " bytes");
+    callbackLogger(DEBUG, "Respond with " + std::to_string(msg.length()) + " bytes");
 }
 
 Socket initListenSocket() {
@@ -181,20 +181,20 @@ bool acceptClientFailed(Socket listenSocket, Socket* clientSocket, std::string* 
 #endif
 }
 
-int handleClientDecision(std::function<void(std::string)> callbackLogger, Socket clientSocket) {
+int handleClientDecision(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket) {
     char buffer[BUFFER_SIZE];
     int bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE, 0);
     if (bytesReceived <= 0)
         throw CustomException("No client input");
 
     buffer[bytesReceived] = '\0';
-    callbackLogger("[[ DEBUG ]]: " + std::string(buffer));
+    callbackLogger(DEBUG, std::string(buffer));
     int clientChoice = atoi(buffer);
     return clientChoice;
 }
 
-void closeClientConnection(std::function<void(std::string)> callbackLogger, Socket clientSocket){
-    callbackLogger("Closing the client connection...");
+void closeClientConnection(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket){
+    callbackLogger(DEBUG, "Closing the client connection...");
     char* byeBye = "\nBye...\n";
     send(clientSocket, byeBye, sizeof(byeBye), 0);
 

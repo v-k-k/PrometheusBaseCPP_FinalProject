@@ -5,7 +5,10 @@
 #include <string>
 #include <vector>
 #include <cstring>
+#include <ctime>
+#include <iomanip>
 #include "../exceptions/customEx.h"
+#include "../tools/tools.h"
 
 #ifdef _WIN32
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -29,6 +32,8 @@ class Client {
         std::string ip;
         int id;
         static int objCounter;
+        static const std::vector<std::string> serializationDelimiters;
+        Client(int id, int port, std::string addr);
 
     public:
         /// @brief Constructs a Client object.
@@ -36,7 +41,9 @@ class Client {
         /// @param addr The client's ip address.
         Client(int port, std::string addr);
         ~Client();
-        void log(std::string msg);
+        std::string serialize() const;
+        static Client* deserialize(const std::string str);
+        void log(LogLevel level, std::string msg);
         int getId() const;
 
 };

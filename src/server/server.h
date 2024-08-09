@@ -9,6 +9,7 @@
 #include <functional>
 #include <map>
 #include "../exceptions/customEx.h"
+#include "../tools/enumerations.h"
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -28,9 +29,9 @@ std::pair<std::string, int> getClientIpPort(Socket clientSocket);
 
 sockaddr_in createServerAddress(u_short port);
 
-void collectAndProcess(std::function<void(std::string)> callbackLogger, Socket clientSocket, int perationIdx);
+void collectAndProcess(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket, int perationIdx);
 
-void responseHello(std::function<void(std::string)> callbackLogger, Socket clientSocket);
+void responseHello(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket);
 
 Socket initListenSocket();
 
@@ -42,10 +43,10 @@ void startListeninig(Socket listenSocket, sockaddr_in serverAddr, u_short port);
 
 bool acceptClientFailed(Socket listenSocket, Socket* clientSocket, std::string* errMsg);
 
-int handleClientDecision(std::function<void(std::string)> callbackLogger, Socket clientSocket);
+int handleClientDecision(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket);
 
-void respondWithText(std::string msg, std::function<void(std::string)> callbackLogger, Socket clientSocket);
+void respondWithText(std::string msg, std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket);
 
-void closeClientConnection(std::function<void(std::string)> callbackLogger, Socket clientSocket);
+void closeClientConnection(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket);
 
 #endif

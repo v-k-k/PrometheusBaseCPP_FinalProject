@@ -1,9 +1,16 @@
-#include <ctime>
 #include "client.h"
 
 int Client::objCounter = 0;
 
-/// @brief Implementation of the Client constructor.
+/// @brief Implementation of the Client private constructor.
+Client::Client(int id, int port, std::string addr) {
+    this->id = id;
+    this->port = port;
+    this->ip = addr;
+    objCounter++;
+}
+
+/// @brief Implementation of the Client public constructor.
 Client::Client(int port, std::string addr) : id(++objCounter) {
     this->port = port;
     this->ip = addr;
@@ -12,19 +19,31 @@ Client::Client(int port, std::string addr) : id(++objCounter) {
 /// @brief Implementation of the Client destructor
 Client::~Client() = default;
 
+const std::vector<std::string> Client::serializationDelimiters = {" <<", " : ", ">> "};
+
+std::string Client::serialize() const {
+    std::string selfRepr = std::to_string(id) + 
+                           Client::serializationDelimiters[0] + 
+                           ip + 
+                           Client::serializationDelimiters[1] + 
+                           std::to_string(port) + 
+                           Client::serializationDelimiters[2];
+    return selfRepr;
+}
+
+Client* Client::deserialize(const std::string str) {
+    std::vector<std::string> respTokens = split(str, Client::serializationDelimiters);
+    int id = std::stoi(respTokens[0]);
+    int port = std::stoi(respTokens[2]);
+    std::string addr = respTokens[1];
+    return new Client(id, port, addr);
+}
+
 /// @brief Implementation of the log method
-void Client::log(std::string msg) {       
-    // Get the current time as a time_t object
-    time_t now = time(nullptr);
-
-    // Convert to local time
-    tm* local_time = localtime(&now);
-
-    // Format the time as a string
-    char t_stamp[80];
-    strftime(t_stamp, sizeof(t_stamp), "%Y-%m-%d %H:%M:%S", local_time);
-
-    std::cout << "C_" << id << " <<" << ip << " : " << port << ">> " << "[ " << t_stamp << " ]: " << msg << std::endl;
+void Client::log(LogLevel level, std::string msg){
+    static const char* level_names[] = {"DEBUG", "INFO", "WARNING", "ERROR"};
+    if (level >= INFO) // Adjust this threshold as needed
+        std::cerr << "[[ " << level_names[level] << " ]]\t" << "C_" << serialize() << "[ " << getCurrentTimeString() << " ]: " << msg << std::endl;
 }
 
 int Client::getId() const {
@@ -61,17 +80,6 @@ Socket initClientSocket() {
 }
 
 sockaddr_in createAddress(u_short port) {
-    /*struct hostent *hostinfo = gethostbyname("127.0.0.1");
-        if (hostinfo == NULL) {
-            perror("Error resolving hostname");
-            exit(1);
-        }
-
-        // Fill server address structure
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-        memcpy(&addr.sin_addr, hostinfo->h_addr, hostinfo->h_length);
-        addr.sin_port = htons(usPort);*/
     sockaddr_in addr;
 #ifdef _WIN32	
     addr.sin_family = AF_INET;
@@ -116,11 +124,10 @@ void connectToServer(Socket clientSocket, sockaddr_in addr){
 void receiveFromServer(Socket clientSocket, char* buffer, int buffer_size){
     memset(buffer, 0, buffer_size); // Clear the buffer
     int recvResult = recv(clientSocket, buffer, buffer_size - 1, 0); // Leave space for null terminator
-    if (recvResult > 0) {
+    if (recvResult > 0){
         buffer[recvResult] = '\0'; // Null-terminate the received data
         std::cout << buffer << std::endl;
     }
-    else {
+    else
         closeClientSocket(clientSocket, "Receive", true);
-    }
 }
