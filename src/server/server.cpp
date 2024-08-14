@@ -24,6 +24,7 @@ std::pair<std::string, int> getClientIpPort(Socket clientSocket) {
     return { std::string(ipStr), port };
 }
 
+/// @brief Implementation of the server address creation on any network interface
 sockaddr_in createServerAddress(u_short port) {
     sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
@@ -32,6 +33,8 @@ sockaddr_in createServerAddress(u_short port) {
     return serverAddr;
 }
 
+/// @brief Grab the values recieved from client
+/// @return int vector
 std::vector<int> collectIntVector(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket) {
     std::vector<int> values;
     std::string buffer;
@@ -61,11 +64,12 @@ std::vector<int> collectIntVector(std::function<void(LogLevel, std::string)> cal
     return values;
 }
 
-void collectAndProcess(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket, int perationIdx) {
+/// @brief Calculate the result due to provided operation index
+void collectAndProcess(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket, int operationIdx) {
     std::vector<int> values = collectIntVector(callbackLogger, clientSocket);
     int result = 0;
     std::string finished = "sum: ";
-    switch (perationIdx)
+    switch (operationIdx)
     {
     case 1:
         result = 1;
@@ -181,6 +185,8 @@ bool acceptClientFailed(Socket listenSocket, Socket* clientSocket, std::string* 
 #endif
 }
 
+/// @brief Receive client input and interpret it as the choice from main menu
+/// @return int.
 int handleClientDecision(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket) {
     char buffer[BUFFER_SIZE];
     int bytesReceived = recv(clientSocket, buffer, BUFFER_SIZE, 0);

@@ -1,8 +1,42 @@
 // #include <limits> /* Uncomment in case if overflow check required */
 #include <ctime>
+#include <thread>
 #include "server/server.h"
 #include "client/client.h"
 #include "tools/tools.h"
+
+
+void handleClient(Socket clientSocket) {
+    int userDecision;
+    auto [client_ip, client_port] = getClientIpPort(clientSocket);
+    Client* clt = new Client(client_port, client_ip);
+    clt->log(INFO, "We have " + std::to_string(clt->getId()) + " client");
+
+    /*
+     * Uncomment `responseHello` function in case of using third-party socket client like Putty etc.
+     */
+    // responseHello([clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
+
+    // Greet te client
+    std::string greetMsg = "WELCOME TO SIMPLE SOCKET SERVER!!!\r\n" + clt->serialize() + "\r\n";
+    send(clientSocket, greetMsg.c_str(), greetMsg.length(), 0);
+
+    while (true) {
+        // Provide the server menu
+        respondWithText(SERVER_MENU, [clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
+
+        userDecision = handleClientDecision([clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
+
+        // calculate
+        auto chosenFunc = userMadeDecision(userDecision);
+        respondWithText(chosenFunc.first, [clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
+        chosenFunc.second([clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
+    }
+
+    // Handle client disconnection or error
+    delete clt;
+    closeClientSocket(clientSocket);
+}
 
 
 int main() {
@@ -26,13 +60,15 @@ int main() {
 
     u_short usPort = static_cast<u_short>(intPort);
 
-    if (userDecision == 1){
+    if (userDecision == 1){ // SERVER
         Socket listenSocket = initListenSocket();
         sockaddr_in serverAddr = createServerAddress(usPort);
 
         bindListenSocket(listenSocket, serverAddr);
         startListeninig(listenSocket, serverAddr, usPort);
 
+        // Create the vector of client-handling threads
+        std::vector<std::thread> threads;
         while (true) {
             Socket clientSocket;
             std::string errMsg;
@@ -40,34 +76,15 @@ int main() {
                 std::cout << errMsg << std::endl;
                 continue;
             }
-
-            auto [client_ip, client_port] = getClientIpPort(clientSocket);
-
-            Client* clt = new Client(client_port, client_ip);
-            clt->log(INFO, "We have " + std::to_string(clt->getId()) + " client");
-
-            std::string greetMsg = "WELCOME TO SIMPLE SOCKET SERVER!!!\r\n" + clt->serialize() + "\r\n";
-
-            /*
-             * Uncomment `responseHello` function in case of using third-party socket client like Putty etc.
-             */
-            // responseHello([clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
-            send(clientSocket, greetMsg.c_str(), greetMsg.length(), 0);
-
-            while (true) {
-                respondWithText(SERVER_MENU, [clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
-
-                userDecision = handleClientDecision([clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
-                
-                auto chosenFunc = userMadeDecision(userDecision);
-                respondWithText(chosenFunc.first, [clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
-                chosenFunc.second([clt](LogLevel level, std::string msg) { clt->log(INFO, msg); }, clientSocket);
-            }
+            threads.emplace_back(handleClient, std::move(clientSocket));
         }
+
+        // Wait for all threads to finish
+        for (auto& t : threads) t.join();
 
         closeListenSocket(listenSocket);
     }
-    else if (userDecision == 2){
+    else if (userDecision == 2){ // CLIENT
         Socket clientSocket = initClientSocket();
         sockaddr_in addr = createAddress(usPort);
         connectToServer(clientSocket, addr);

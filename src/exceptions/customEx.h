@@ -4,6 +4,7 @@
 #include <exception>
 #include <string>
 
+/// @brief Simple custom exception class
 class CustomException : public std::exception {
 public:
     explicit CustomException(const std::string& message) : message_(message) {}

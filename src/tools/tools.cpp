@@ -29,6 +29,8 @@ std::string getCurrentTimeString() {
     return ss.str();
 }
 
+/// @brief Implementation of userMadeDecision according to users choise in main menu
+/// @return pair of response message and appropriate func for calculations
 std::pair<std::string, std::function<void(std::function<void(LogLevel, std::string)>, Socket)>> userMadeDecision(int decIdx) {
     switch (decIdx) {
         case 1:
@@ -48,6 +50,8 @@ std::pair<std::string, std::function<void(std::function<void(LogLevel, std::stri
     }
 }
 
+/// @brief Splits the string with provided vector of delimiters
+/// @return vector of tokens.
 std::vector<std::string> split(const std::string& s, const std::vector<std::string>& delimiters) {
     std::vector<std::string> tokens;
     size_t start = 0, end = 0;

@@ -33,6 +33,11 @@ class Client {
         int id;
         static int objCounter;
         static const std::vector<std::string> serializationDelimiters;
+
+        /// @brief Constructs a Client object for deserialize method.
+        /// @param id The client's object ID.
+        /// @param port The client's port.
+        /// @param addr The client's ip address.
         Client(int id, int port, std::string addr);
 
     public:

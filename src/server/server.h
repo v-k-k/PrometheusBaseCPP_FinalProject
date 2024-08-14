@@ -29,7 +29,7 @@ std::pair<std::string, int> getClientIpPort(Socket clientSocket);
 
 sockaddr_in createServerAddress(u_short port);
 
-void collectAndProcess(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket, int perationIdx);
+void collectAndProcess(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket, int operationIdx);
 
 void responseHello(std::function<void(LogLevel, std::string)> callbackLogger, Socket clientSocket);
 

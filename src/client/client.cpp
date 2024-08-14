@@ -21,6 +21,7 @@ Client::~Client() = default;
 
 const std::vector<std::string> Client::serializationDelimiters = {" <<", " : ", ">> "};
 
+/// @brief Implementation of the serialization method
 std::string Client::serialize() const {
     std::string selfRepr = std::to_string(id) + 
                            Client::serializationDelimiters[0] + 
@@ -31,6 +32,7 @@ std::string Client::serialize() const {
     return selfRepr;
 }
 
+/// @brief Implementation of the deserialization method with instance creation
 Client* Client::deserialize(const std::string str) {
     std::vector<std::string> respTokens = split(str, Client::serializationDelimiters);
     int id = std::stoi(respTokens[0]);
@@ -50,6 +52,7 @@ int Client::getId() const {
     return id;
 }
 
+/// @brief Implementation of the client socket startup
 Socket initClientSocket() {
     Socket clientSocket;
 
@@ -79,6 +82,7 @@ Socket initClientSocket() {
     return clientSocket;
 }
 
+/// @brief Implementation of the server address creation on on the client side (localhost)
 sockaddr_in createAddress(u_short port) {
     sockaddr_in addr;
 #ifdef _WIN32	
